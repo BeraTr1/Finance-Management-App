@@ -76,7 +76,10 @@ public class Dashboard {
 
                 HBox accountCard = new HBox();
                 accountCard.setStyle("-fx-background-color: #BCB3FA");
-                accountCard.setMinSize(150, 175);
+                accountCard.setMinSize(200, 300);
+                accountCard.setOnMouseClicked(event -> {
+                    inspectAccount(account);
+                });
 
                 Text accountName = new Text(account.getName());
 
@@ -98,8 +101,80 @@ public class Dashboard {
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
+    }
 
-        // transfer money
+    private void inspectAccount(Account account) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().setPrefSize(600, 700); // 800, 600
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(5);
+        gridPane.setVgap(5);
+        gridPane.setGridLinesVisible(true);
+        gridPane.setPrefSize(dialog.getHeight(), dialog.getWidth());
+        gridPane.setAlignment(Pos.CENTER);
+
+        HBox accountVisual = new HBox();
+        accountVisual.setPrefSize(200, 200);
+        accountVisual.setStyle("-fx-background-color: #37B432");
+        gridPane.add(accountVisual, 0, 0, 5, 2);
+
+        HBox accountDetails = new HBox();
+        accountDetails.setPrefSize(200, 50);
+        accountDetails.setStyle("-fx-background-color: #AFC915");
+        gridPane.add(accountDetails, 0, 2, 5, 1);
+
+        Button depositMoneyButton = new Button();
+        depositMoneyButton.setText("Deposit Money");
+        depositMoneyButton.setOnAction(event -> {
+
+        });
+        gridPane.add(depositMoneyButton, 0, 3, 1, 1);
+
+        Button withdrawMoneyButton = new Button();
+        withdrawMoneyButton.setText("Withdraw Money");
+        withdrawMoneyButton.setOnAction(event -> {
+
+        });
+        gridPane.add(withdrawMoneyButton, 1, 3, 1, 1);
+
+        Button transferMoneyButton = new Button();
+        transferMoneyButton.setText("Transfer Money");
+        transferMoneyButton.setOnAction(event -> {
+
+        });
+        gridPane.add(transferMoneyButton, 2, 3, 1, 1);
+
+        Button borrowMoneyButton = new Button();
+        borrowMoneyButton.setText("Borrow Money");
+        borrowMoneyButton.setOnAction(event -> {
+
+        });
+        gridPane.add(borrowMoneyButton, 3, 3, 1, 1);
+
+        Button editAccountButton = new Button();
+        editAccountButton.setText("Edit Account");
+        editAccountButton.setOnAction(event -> {
+
+        });
+        gridPane.add(editAccountButton, 4, 3, 1, 1);
+
+        // todo add recent transactions
+        int maxTransactions = 5;
+
+        for (int i = 1; i <= maxTransactions; i++) {
+            HBox recentTransactionBox = new HBox();
+            recentTransactionBox.setStyle("-fx-background-color: #D4759C");
+            recentTransactionBox.setPrefSize(200, 50);
+
+            int row = i + 3;
+            gridPane.add(recentTransactionBox, 0, row, 5, 1);
+        }
+
+        dialog.getDialogPane().setContent(gridPane);
+
+        dialog.showAndWait();
     }
 
     private void createAccountDialog() {
