@@ -3,6 +3,7 @@ package user.saulo.managers;
 import user.saulo.Account;
 import user.saulo.FinancesManagementApp;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,13 @@ public class AppManager {
         Account account = accountManager.getAccountFromName(accountName);
 
         return account != null;
+    }
+
+    public double roundDouble(double d) {
+        DecimalFormat decimalFormat = new DecimalFormat("0.00");
+        String roundedDoubleString = decimalFormat.format(d);
+
+        return Double.valueOf(roundedDoubleString);
     }
 
     public void test() {
