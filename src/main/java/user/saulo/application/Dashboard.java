@@ -3,7 +3,11 @@ package user.saulo.application;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
+import eu.hansolo.medusa.Test;
 import eu.hansolo.medusa.skins.SimpleSectionSkin;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -28,6 +32,7 @@ import user.saulo.managers.AppManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Dashboard {
     private String title = "Dashboard";
@@ -181,27 +186,9 @@ public class Dashboard {
 //                System.out.println("Debt arc length: " + arcDebtAngleLenght + " | percentage: " + debtPercentage + " | rounded: " + arcDebtAngleLenght);
 //                Arc arcDebt = new Arc(100, 100, 90, 90, 180, arcDebtAngleLenght); // centerX, centerY, radiusX, radiusY, startAngle, angleLength
                 Color arcDebtColor = Color.web("#EE3024");
-//                arcDebt.setStroke(arcDebtColor);
-//                arcDebt.setStrokeWidth(20);
-//                arcDebt.setFill(Color.TRANSPARENT);
-//                GridPane.setHalignment(arcDebt, HPos.CENTER);
-                Arc arcDebt = new Arc(); //createArc(arcDebtColor, debtPercentage);
 
-
-//                gridPane.add(arcDebt, 0, 0, 4, 2);
-//                gridPane.add(arcCredit, 0, 0, 4, 2);
-//                gridPane.add(arcBalance, 0, 0, 4, 2);
-//                GridPane.setHalignment(arcDebt, HPos.CENTER);
-
-//                Group group = new Group(arcDebt, arcCredit, arcBalance);
-//                GridPane.setHalignment(group, HPos.CENTER);
-//                gridPane.add(group, 0, 0, 4, 2);
-
-                // -- //
-
-//                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION).value(30).threshold(50).thresholdColor(Color.YELLOW).thresholdVisible(true).build();
-//                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SPACE_X).maxValue(totalMoney).value(arcBalanceAngleLength).valueColor(arcBalanceColor).threshold(arcBalanceAngleLength).thresholdColor(arcDebtColor).barBackgroundColor(arcCreditColor).valueVisible(false).build();
-//                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SPACE_X).maxValue(totalMoney).value(accountBalance).threshold(accountDebt).thresholdColor(Color.PURPLE).backgroundPaint(Color.TRANSPARENT).barColor(arcBalanceColor).barBackgroundColor(Color.BLUE).valueVisible(false).build();
+                Section graySection = new Section(0, totalMoney);
+                graySection.setColor(accountDebt + accountBalance + accountCredit == 0 ? Color.GRAY : arcBalanceColor);
                 Section creditSection = new Section(0, accountCredit);
                 creditSection.setColor(arcCreditColor);
                 creditSection.setTextColor(arcCreditColor);
@@ -215,10 +202,15 @@ public class Dashboard {
                 debtSection.setTextColor(arcDebtColor);
                 debtSection.setText("Debt");
 
-                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION).sectionsVisible(true).sectionTextVisible(true).sections(balanceSection, creditSection, debtSection).maxValue(totalMoney).value(accountBalance + accountCredit).barBackgroundColor(accountDebt + accountBalance + accountCredit == 0 ? Color.GRAY : arcDebtColor).barColor(Color.WHITE).valueVisible(false).build();
-//                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SPACE_X).sections(section).maxValue(100).value(10).threshold(10).thresholdColor(Color.PURPLE).backgroundPaint(Color.TRANSPARENT).barColor(arcBalanceColor).barBackgroundColor(Color.BLUE).valueVisible(false).build();
-//                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.DASHBOARD).value(50).threshold(1000).build();
+                Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION).sectionsVisible(true).sectionTextVisible(true).sections(graySection, balanceSection, creditSection, debtSection).maxValue(totalMoney).value((accountBalance + accountCredit)).barBackgroundColor(accountDebt + accountBalance + accountCredit == 0 ? Color.GRAY : arcDebtColor).barColor(Color.WHITE).valueVisible(false).build();
                 gridPane.add(gauge, 0, 0, 4, 2);
+
+                Text accountText = new Text();
+                accountText.setText("$" + accountBalance);
+                accountText.setFill(arcBalanceColor);
+                accountText.setStyle("-fx-font-size: 20");
+                GridPane.setHalignment(accountText, HPos.CENTER);
+                gridPane.add(accountText, 0, 0, 4, 2);
 
                 // -- //
 
@@ -236,21 +228,33 @@ public class Dashboard {
                 Button depositButton = new Button();
                 depositButton.setText("Deposit Money");
                 depositButton.setMaxWidth(Double.MAX_VALUE);
+                depositButton.setOnAction(action -> {
+                    depositMoney(account);
+                });
                 gridPane.add(depositButton, 0, 4, 2, 1);
 
                 Button withdrawButton = new Button();
                 withdrawButton.setText("Withdraw Money");
                 withdrawButton.setMaxWidth(Double.MAX_VALUE);
+                withdrawButton.setOnAction(action -> {
+
+                });
                 gridPane.add(withdrawButton, 2, 4, 2, 1);
 
                 Button transferButton = new Button();
                 transferButton.setText("Transfer Money");
                 transferButton.setMaxWidth(Double.MAX_VALUE);
+                transferButton.setOnAction(action -> {
+                    transferMoney(account);
+                });
                 gridPane.add(transferButton, 0, 5, 2, 1);
 
                 Button borrowButton = new Button();
                 borrowButton.setText("Borrow Money");
                 borrowButton.setMaxWidth(Double.MAX_VALUE);
+                borrowButton.setOnAction(action -> {
+                    borrowMoney(account);
+                });
                 gridPane.add(borrowButton, 2, 5, 2, 1);
 
                 grid.add(accountCard, col, row);
@@ -326,7 +330,7 @@ public class Dashboard {
         Button transferMoneyButton = new Button();
         transferMoneyButton.setText("Transfer Money");
         transferMoneyButton.setOnAction(event -> {
-
+            withdrawMoney(account);
         });
         gridPane.add(transferMoneyButton, 2, 3, 1, 1);
 
@@ -398,6 +402,212 @@ public class Dashboard {
         } catch (Exception e) {
             this.app.displayError(e.getMessage());
         }
+    }
+
+    private void depositMoney(Account account) {
+        GridPane gridPane = new GridPane();
+        RowConstraints row1 = new RowConstraints();
+        row1.setPercentHeight(50);
+        RowConstraints row2 = new RowConstraints();
+        row2.setPercentHeight(50);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(100);
+
+        gridPane.getRowConstraints().addAll(row1, row2);
+        gridPane.getColumnConstraints().addAll(col1);
+
+        TextField amountInput = new TextField();
+        amountInput.setPromptText("Enter the amount being deposited");
+        amountInput.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                if (!newValue.matches("\\d*") || !newValue.matches("\\.")) {
+                    amountInput.setText(newValue.replaceAll("[^\\d\\.]", ""));
+                }
+            }
+        });
+        gridPane.add(amountInput, 0, 0, 1, 1);
+
+        TextField description = new TextField();
+        description.setPromptText("Enter a description");
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    double amount = appManager.getDoubleFromString(amountInput.getText());
+                    appManager.addBalance(account.getName(), amount);
+                    loadDashboardCenter();
+                } catch (Exception e) {
+                    app.displayError(e.getMessage());
+                }
+            }
+
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void withdrawMoney(Account account) {
+        GridPane gridPane = new GridPane();
+        RowConstraints row1 = new RowConstraints();
+        row1.setPercentHeight(50);
+        RowConstraints row2 = new RowConstraints();
+        row2.setPercentHeight(50);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(100);
+
+        gridPane.getRowConstraints().addAll(row1, row2);
+        gridPane.getColumnConstraints().addAll(col1);
+
+        TextField amountInput = new TextField();
+        amountInput.setPromptText("Enter the amount being withdrawn");
+        amountInput.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                if (!newValue.matches("\\d*") || !newValue.matches("\\.")) {
+                    amountInput.setText(newValue.replaceAll("[^\\d\\.]", ""));
+                }
+            }
+        });
+        gridPane.add(amountInput, 0, 0, 1, 1);
+
+        TextField description = new TextField();
+        description.setPromptText("Enter a description");
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    double amount = appManager.getDoubleFromString(amountInput.getText());
+                    appManager.removeBalance(account.getName(), amount);
+                    loadDashboardCenter();
+                } catch (Exception e) {
+                    app.displayError(e.getMessage());
+                }
+            }
+
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void transferMoney(Account account) {
+        GridPane gridPane = new GridPane();
+        RowConstraints row1 = new RowConstraints();
+        row1.setPercentHeight(30);
+        RowConstraints row2 = new RowConstraints();
+        row2.setPercentHeight(40);
+        RowConstraints row3 = new RowConstraints();
+        row3.setPercentHeight(30);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(100);
+
+        gridPane.getRowConstraints().addAll(row1, row2);
+        gridPane.getColumnConstraints().addAll(col1);
+
+        TextField amountInput = new TextField();
+        amountInput.setPromptText("Enter the amount being transferred");
+        amountInput.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                if (!newValue.matches("\\d*") || !newValue.matches("\\.")) {
+                    amountInput.setText(newValue.replaceAll("[^\\d\\.]", ""));
+                }
+            }
+        });
+        gridPane.add(amountInput, 0, 0, 1, 1);
+
+        ChoiceBox<String> choiceBox = new ChoiceBox<>();
+        choiceBox.getItems().addAll(appManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
+        gridPane.add(choiceBox, 0, 1, 1, 1);
+
+        TextField description = new TextField();
+        description.setPromptText("Enter a description");
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    double amount = appManager.getDoubleFromString(amountInput.getText());
+                    String toAccount = choiceBox.getValue();
+                    appManager.transferMoney(account.getName(), toAccount, amount);
+                    loadDashboardCenter();
+                } catch (Exception e) {
+                    app.displayError(e.getMessage());
+                }
+            }
+
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void borrowMoney(Account account) {
+        GridPane gridPane = new GridPane();
+        RowConstraints row1 = new RowConstraints();
+        row1.setPercentHeight(30);
+        RowConstraints row2 = new RowConstraints();
+        row2.setPercentHeight(40);
+        RowConstraints row3 = new RowConstraints();
+        row3.setPercentHeight(30);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(100);
+
+        gridPane.getRowConstraints().addAll(row1, row2);
+        gridPane.getColumnConstraints().addAll(col1);
+
+        TextField amountInput = new TextField();
+        amountInput.setPromptText("Enter the amount being transferred");
+        amountInput.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                if (!newValue.matches("\\d*") || !newValue.matches("\\.")) {
+                    amountInput.setText(newValue.replaceAll("[^\\d\\.]", ""));
+                }
+            }
+        });
+        gridPane.add(amountInput, 0, 0, 1, 1);
+
+        ChoiceBox<String> choiceBox = new ChoiceBox<>();
+        choiceBox.getItems().addAll(appManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
+        gridPane.add(choiceBox, 0, 1, 1, 1);
+
+        TextField description = new TextField();
+        description.setPromptText("Enter a description");
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    double amount = appManager.getDoubleFromString(amountInput.getText());
+                    String fromAccount = choiceBox.getValue();
+                    appManager.borrowMoney(fromAccount, account.getName(), amount);
+                    loadDashboardCenter();
+                } catch (Exception e) {
+                    app.displayError(e.getMessage());
+                }
+            }
+
+            return null;
+        });
+
+        dialog.showAndWait();
     }
 
     public String getTitle() {
