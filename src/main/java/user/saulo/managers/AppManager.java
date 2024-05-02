@@ -103,4 +103,12 @@ public class AppManager {
     public void test() {
         System.out.println("App Manager is loaded!");
     }
+
+    public double getDoubleFromString(String s) throws Exception {
+        try {
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            throw new Exception("'" + s + "' is not a number!");
+        }
+    }
 }
