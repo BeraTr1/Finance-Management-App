@@ -11,6 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -139,52 +140,23 @@ public class Dashboard {
 
                 gridPane.getRowConstraints().addAll(row1, row2, row3, row4, row5);
 
-//                HBox accountCardVisual = new HBox();
-//                accountCardVisual.setStyle("-fx-background-color: #DAC816");
-//                gridPane.add(accountCardVisual, 0, 0, 4, 2);
-
-//                Arc arc = new Arc(100, 100, 90, 90, 0, 180); // centerX, centerY, radiusX, radiusY, startAngle, angleLength
-//                Color arcColor = Color.web("#8E8E8E");
-//                arc.setStroke(arcColor);
-//                arc.setStrokeWidth(20);
-//                arc.setFill(Color.TRANSPARENT);
-//                gridPane.add(arc, 0, 0, 4, 2);
-//                GridPane.setHalignment(arc, HPos.CENTER);
-
                 double accountBalance = account.getBalance();
                 double accountCredit = account.getCredit();
                 double accountDebt = account.getDebt();
                 double totalMoney = (accountBalance + accountCredit + accountDebt) == 0 ? 1 : (accountBalance + accountCredit + accountDebt);
 
                 double balancePercentage = appManager.roundDouble(accountBalance / totalMoney);
-////                double arcBalanceStartAngle = 180;
                 double arcBalanceAngleLength = appManager.roundDouble(balancePercentage * 270);
-//                System.out.println("Balance arc length: " + arcBalanceAngleLength + " | percentage: " + balancePercentage + " | rounded: " + arcBalanceAngleLength);
-//                Arc arcBalance = new Arc(100, 100, 90, 90, 180, arcBalanceAngleLength); // centerX, centerY, radiusX, radiusY, startAngle, angleLength
                 Color arcBalanceColor = Color.web("#3FDA2A");
-//                arcBalance.setStroke(arcBalanceColor);
-//                arcBalance.setStrokeWidth(20);
-//                arcBalance.setFill(Color.TRANSPARENT);
-//                GridPane.setHalignment(arcBalance, HPos.CENTER);
                 Arc arcBalance = createArc(arcBalanceColor, balancePercentage);
 //
                 double creditPercentage = appManager.roundDouble(accountCredit / totalMoney);
-////                double arcCreditStartAngle = arcBalanceStartAngle + arcBalanceAngleLength;
                 double arcCreditAngleLength = appManager.roundDouble(creditPercentage * 270 + arcBalanceAngleLength);
-//                System.out.println("Credit arc length: " + arcCreditAngleLength + " | percentage: " + creditPercentage + " | rounded: " + arcCreditAngleLength);
-//                Arc arcCredit = new Arc(100, 100, 90, 90, 180, arcCreditAngleLength); // centerX, centerY, radiusX, radiusY, startAngle, angleLength
                 Color arcCreditColor = Color.web("#97FC5E");
-//                arcCredit.setStroke(arcCreditColor);
-//                arcCredit.setStrokeWidth(20);
-//                arcCredit.setFill(Color.TRANSPARENT);
-////                GridPane.setHalignment(arcCredit, HPos.CENTER);
                 Arc arcCredit = createArc(arcCreditColor, creditPercentage);
 
                 double debtPercentage = appManager.roundDouble(accountDebt / totalMoney);
-////                double arcDebtStartAngle = arcCreditStartAngle + arcCreditAngleLength;
                 double arcDebtAngleLenght = appManager.roundDouble(debtPercentage * 270 + arcCreditAngleLength);
-//                System.out.println("Debt arc length: " + arcDebtAngleLenght + " | percentage: " + debtPercentage + " | rounded: " + arcDebtAngleLenght);
-//                Arc arcDebt = new Arc(100, 100, 90, 90, 180, arcDebtAngleLenght); // centerX, centerY, radiusX, radiusY, startAngle, angleLength
                 Color arcDebtColor = Color.web("#EE3024");
 
                 Section graySection = new Section(0, totalMoney);
@@ -210,7 +182,24 @@ public class Dashboard {
                 accountText.setFill(arcBalanceColor);
                 accountText.setStyle("-fx-font-size: 20");
                 GridPane.setHalignment(accountText, HPos.CENTER);
-                gridPane.add(accountText, 0, 0, 4, 2);
+                GridPane.setValignment(accountText, VPos.BOTTOM);
+                gridPane.add(accountText, 0, 0, 4, 1);
+
+                Text accountCreditText = new Text();
+                accountCreditText.setText("$" + accountCredit);
+                accountCreditText.setFill(arcCreditColor);
+                accountCreditText.setStyle("-fx-font-size: 10");
+                GridPane.setHalignment(accountCreditText, HPos.RIGHT);
+                GridPane.setValignment(accountCreditText, VPos.TOP);
+                gridPane.add(accountCreditText, 1, 1, 1, 1);
+
+                Text accountDebtText = new Text();
+                accountDebtText.setText("$" + accountDebt);
+                accountDebtText.setFill(arcDebtColor);
+                accountDebtText.setStyle("-fx-font-size: 10");
+                GridPane.setHalignment(accountDebtText, HPos.LEFT);
+                GridPane.setValignment(accountDebtText, VPos.TOP);
+                gridPane.add(accountDebtText, 2, 1, 1, 1);
 
                 // -- //
 
@@ -237,7 +226,7 @@ public class Dashboard {
                 withdrawButton.setText("Withdraw Money");
                 withdrawButton.setMaxWidth(Double.MAX_VALUE);
                 withdrawButton.setOnAction(action -> {
-
+                    withdrawMoney(account);
                 });
                 gridPane.add(withdrawButton, 2, 4, 2, 1);
 
@@ -247,7 +236,8 @@ public class Dashboard {
                 transferButton.setOnAction(action -> {
                     transferMoney(account);
                 });
-                gridPane.add(transferButton, 0, 5, 2, 1);
+                GridPane.setHalignment(transferButton, HPos.CENTER);
+                gridPane.add(transferButton, 0, 5, 1, 1);
 
                 Button borrowButton = new Button();
                 borrowButton.setText("Borrow Money");
@@ -255,7 +245,17 @@ public class Dashboard {
                 borrowButton.setOnAction(action -> {
                     borrowMoney(account);
                 });
-                gridPane.add(borrowButton, 2, 5, 2, 1);
+                GridPane.setHalignment(borrowButton, HPos.CENTER);
+                gridPane.add(borrowButton, 1, 5, 1, 1);
+
+                Button repayDebtButton = new Button();
+                repayDebtButton.setText("Repay Debt");
+                repayDebtButton.setMaxWidth(Double.MAX_VALUE);
+                repayDebtButton.setOnAction(action -> {
+                    repayDebt(account);
+                });
+                GridPane.setHalignment(repayDebtButton, HPos.CENTER);
+                gridPane.add(repayDebtButton, 2, 5, 1, 1);
 
                 grid.add(accountCard, col, row);
                 accounts.remove(account);
@@ -571,7 +571,7 @@ public class Dashboard {
         gridPane.getColumnConstraints().addAll(col1);
 
         TextField amountInput = new TextField();
-        amountInput.setPromptText("Enter the amount being transferred");
+        amountInput.setPromptText("Enter the amount being borrowed");
         amountInput.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
@@ -598,6 +598,61 @@ public class Dashboard {
                     double amount = appManager.getDoubleFromString(amountInput.getText());
                     String fromAccount = choiceBox.getValue();
                     appManager.borrowMoney(fromAccount, account.getName(), amount);
+                    loadDashboardCenter();
+                } catch (Exception e) {
+                    app.displayError(e.getMessage());
+                }
+            }
+
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void repayDebt(Account account) {
+        GridPane gridPane = new GridPane();
+        RowConstraints row1 = new RowConstraints();
+        row1.setPercentHeight(30);
+        RowConstraints row2 = new RowConstraints();
+        row2.setPercentHeight(40);
+        RowConstraints row3 = new RowConstraints();
+        row3.setPercentHeight(30);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(100);
+
+        gridPane.getRowConstraints().addAll(row1, row2);
+        gridPane.getColumnConstraints().addAll(col1);
+
+        TextField amountInput = new TextField();
+        amountInput.setPromptText("Enter the amount being repayed");
+        amountInput.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                if (!newValue.matches("\\d*") || !newValue.matches("\\.")) {
+                    amountInput.setText(newValue.replaceAll("[^\\d\\.]", ""));
+                }
+            }
+        });
+        gridPane.add(amountInput, 0, 0, 1, 1);
+
+        ChoiceBox<String> choiceBox = new ChoiceBox<>();
+        choiceBox.getItems().addAll(appManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
+        gridPane.add(choiceBox, 0, 1, 1, 1);
+
+        TextField description = new TextField();
+        description.setPromptText("Enter a description");
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().setContent(gridPane);
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                try {
+                    double amount = appManager.getDoubleFromString(amountInput.getText());
+                    String toAccount = choiceBox.getValue();
+                    appManager.repayMoney(account.getName(), toAccount, amount);
                     loadDashboardCenter();
                 } catch (Exception e) {
                     app.displayError(e.getMessage());
