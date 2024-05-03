@@ -12,15 +12,20 @@ import java.util.Map;
 
 public class AccountManager {
     private final Map<String, Account> accounts = new HashMap<>();
+
     public Account createAccount(String accountName, String accountDescription) throws Exception {
         if (accounts.containsKey(accountName)) {
             throw new Exception("Account with name '" + accountName + "' already exists!");
         }
 
         Account account = new Account(accountName, accountDescription);
-        accounts.putIfAbsent(accountName, account);
+        addAccount(account);
 
         return account;
+    }
+
+    public void addAccount(Account account) {
+        accounts.putIfAbsent(account.getName(), account);
     }
 
     public List<Account> getAccounts() {
