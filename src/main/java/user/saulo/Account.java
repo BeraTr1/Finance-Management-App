@@ -8,6 +8,14 @@ public class Account {
     private double credit;
     private double goal;
 
+    public Account(String name, String description, double balance, double credit, double debt, double goal) {
+        this.name = name;
+        this.description = description;
+        this.debt = debt;
+        this.balance = balance;
+        this.credit = credit;
+        this.goal = goal;
+    }
 
     public Account(String name, String description) {
         this.name = name;
