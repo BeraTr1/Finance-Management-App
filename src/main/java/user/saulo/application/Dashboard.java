@@ -148,12 +148,10 @@ public class Dashboard {
                 double balancePercentage = appManager.roundDouble(accountBalance / totalMoney);
                 double arcBalanceAngleLength = appManager.roundDouble(balancePercentage * 270);
                 Color arcBalanceColor = Color.web("#3FDA2A");
-                Arc arcBalance = createArc(arcBalanceColor, balancePercentage);
 //
                 double creditPercentage = appManager.roundDouble(accountCredit / totalMoney);
                 double arcCreditAngleLength = appManager.roundDouble(creditPercentage * 270 + arcBalanceAngleLength);
                 Color arcCreditColor = Color.web("#97FC5E");
-                Arc arcCredit = createArc(arcCreditColor, creditPercentage);
 
                 double debtPercentage = appManager.roundDouble(accountDebt / totalMoney);
                 double arcDebtAngleLenght = appManager.roundDouble(debtPercentage * 270 + arcCreditAngleLength);
@@ -201,8 +199,6 @@ public class Dashboard {
                 GridPane.setValignment(accountDebtText, VPos.TOP);
                 gridPane.add(accountDebtText, 2, 1, 1, 1);
 
-                // -- //
-
                 HBox accountCardLine = new HBox();
                 accountCardLine.setStyle("-fx-background-color: #848484");
                 accountCardLine.setMinSize(accountCardWidth * 0.95, 1);
@@ -212,7 +208,6 @@ public class Dashboard {
                 Text accountName = new Text(account.getName());
                 gridPane.add(accountName, 0, 3, 4, 1);
                 GridPane.setHalignment(accountName, HPos.CENTER);
-//                accountName.setTextAlignment(TextAlignment.CENTER);
 
                 Button depositButton = new Button();
                 depositButton.setText("Deposit Money");
@@ -265,22 +260,6 @@ public class Dashboard {
         // todo make accounts scrollable when needed
 
         this.pane.setCenter(grid);
-    }
-
-    private Arc createArc(Color color, double percentage) {
-        Arc arc = new Arc();
-        final double radius = 90;
-        arc.setCenterX(radius);
-        arc.setCenterY(radius);
-        arc.setRadiusX(radius);
-        arc.setRadiusY(radius);
-        arc.setStartAngle(180);
-        arc.setLength(-percentage * 180);
-        arc.setStroke(color);
-        arc.setStrokeWidth(20);
-        arc.setFill(Color.TRANSPARENT);
-
-        return arc;
     }
 
     private void loadDashboardLeft() {
