@@ -35,6 +35,22 @@ public class AppManager {
         accountManager.deleteAccount(accountName);
     }
 
+    public void repayMoney(String fromAccountName, String toAccountName, double amount) throws Exception {
+        Account fromAccount = accountManager.getAccountFromName(fromAccountName);
+
+        if (fromAccount == null) {
+            throw new Exception("Account with name '" + fromAccountName + "' doesn't exist");
+        }
+
+        Account toAccount = accountManager.getAccountFromName(toAccountName);
+
+        if (toAccount == null) {
+            throw new Exception("Account with name '" + toAccountName + "' doesn't exist");
+        }
+
+        accountManager.repayMoney(fromAccount, toAccount, amount);
+    }
+
     public void borrowMoney(String fromAccountName, String toAccountName, double amount) throws Exception {
         Account fromAccount = accountManager.getAccountFromName(fromAccountName);
 
@@ -93,15 +109,12 @@ public class AppManager {
         return account != null;
     }
 
+    @Deprecated
     public double roundDouble(double d) {
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         String roundedDoubleString = decimalFormat.format(d);
 
         return Double.valueOf(roundedDoubleString);
-    }
-
-    public void test() {
-        System.out.println("App Manager is loaded!");
     }
 
     public double getDoubleFromString(String s) throws Exception {
