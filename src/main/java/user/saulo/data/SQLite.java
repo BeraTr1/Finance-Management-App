@@ -2,6 +2,8 @@ package user.saulo.data;
 
 import user.saulo.Account;
 import user.saulo.FinancesManagementApp;
+import user.saulo.managers.AccountManager;
+import user.saulo.managers.AppManager;
 
 import java.io.File;
 import java.sql.*;
@@ -10,8 +12,11 @@ import java.util.List;
 public class SQLite implements Data {
     private final File databaseFile;
 
+    private AccountManager accountManager;
+
     public SQLite(String dataFilePath, String dataFileName) {
         this.databaseFile = new File(dataFilePath + File.separator + dataFileName);
+        this.accountManager = FinancesManagementApp.accountManager;
     }
 
     private Connection connect() {
@@ -50,6 +55,8 @@ public class SQLite implements Data {
         }
 
         saveAccounts(connection);
+        deleteOldAccounts(connection);
+
         connection.close();
     }
 
@@ -71,6 +78,39 @@ public class SQLite implements Data {
             }
         } catch (SQLException e) {
             System.out.println("Error while trying to save accounts: " + e.getMessage());
+        }
+    }
+
+    private void deleteOldAccounts(Connection connection) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM Accounts");
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet == null) {
+                return;
+            }
+
+            while (resultSet.next()) {
+                String accountName = resultSet.getString("name");
+
+                if (accountManager.accountExists(accountName)) {
+                    continue;
+                }
+
+                deleteAccount(connection, accountName);
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void deleteAccount(Connection connection, String accountName) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM Accounts WHERE name='" + accountName + "'");
+            preparedStatement.execute();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 
