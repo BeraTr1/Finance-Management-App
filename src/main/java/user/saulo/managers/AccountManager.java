@@ -39,7 +39,7 @@ public class AccountManager {
         boolean accountExists = accounts.containsKey(accountName);
 
         if (!accountExists) {
-            throw new Exception("Account already exists");
+            throw new Exception("Account doesn't exist");
         }
 
         accounts.remove(accountName);
@@ -119,5 +119,17 @@ public class AccountManager {
 
         double newCredit = MathUtils.roundDouble(new BigDecimal(Double.toString(credit)).subtract(new BigDecimal(Double.toString(amount))).doubleValue());
         account.setCredit(newCredit);
+    }
+
+    public boolean accountExists(Account account) {
+        if (account == null) {
+            return false;
+        }
+
+        return accountExists(account.getName());
+    }
+
+    public boolean accountExists(String accountName) {
+        return this.accounts.containsKey(accountName);
     }
 }
