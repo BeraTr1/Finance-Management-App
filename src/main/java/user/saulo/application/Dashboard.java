@@ -8,6 +8,7 @@ import eu.hansolo.medusa.skins.SimpleSectionSkin;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -26,6 +27,7 @@ import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
 import user.saulo.Account;
 import user.saulo.FinancesManagementApp;
 import user.saulo.managers.AppManager;
@@ -109,7 +111,7 @@ public class Dashboard {
                 accountCard.getChildren().add(gridPane);
                 gridPane.setHgap(5);
                 gridPane.setVgap(5);
-//                gridPane.setGridLinesVisible(true);
+//                gridPane.setGridLinesVisible(true); todo remove
                 gridPane.setMinSize(accountCardWidth * 0.95, accountCardHeight * 0.95);
                 gridPane.setMaxSize(accountCardWidth * 0.95, accountCardHeight * 0.95);
                 gridPane.setAlignment(Pos.CENTER);
@@ -285,24 +287,24 @@ public class Dashboard {
         HBox accountVisual = new HBox();
         accountVisual.setPrefSize(200, 200);
         accountVisual.setStyle("-fx-background-color: #37B432");
-        gridPane.add(accountVisual, 0, 0, 5, 2);
+        gridPane.add(accountVisual, 0, 0, 6, 2);
 
         HBox accountDetails = new HBox();
         accountDetails.setPrefSize(200, 50);
         accountDetails.setStyle("-fx-background-color: #AFC915");
-        gridPane.add(accountDetails, 0, 2, 5, 1);
+        gridPane.add(accountDetails, 0, 2, 6, 1);
 
         Button depositMoneyButton = new Button();
         depositMoneyButton.setText("Deposit Money");
         depositMoneyButton.setOnAction(event -> {
-
+            depositMoney(account);
         });
         gridPane.add(depositMoneyButton, 0, 3, 1, 1);
 
         Button withdrawMoneyButton = new Button();
         withdrawMoneyButton.setText("Withdraw Money");
         withdrawMoneyButton.setOnAction(event -> {
-
+            withdrawMoney(account);
         });
         gridPane.add(withdrawMoneyButton, 1, 3, 1, 1);
 
@@ -316,16 +318,27 @@ public class Dashboard {
         Button borrowMoneyButton = new Button();
         borrowMoneyButton.setText("Borrow Money");
         borrowMoneyButton.setOnAction(event -> {
-
+            borrowMoney(account);
         });
         gridPane.add(borrowMoneyButton, 3, 3, 1, 1);
 
         Button editAccountButton = new Button();
         editAccountButton.setText("Edit Account");
         editAccountButton.setOnAction(event -> {
-
+            editAccount(account);
         });
         gridPane.add(editAccountButton, 4, 3, 1, 1);
+
+        Button deleteAccountButton = new Button();
+        deleteAccountButton.setText("Delete Account");
+        deleteAccountButton.setOnAction(event -> {
+            deleteAccount(account);
+
+            if (!appManager.accountExists(account.getName())) {
+                dialog.close();
+            }
+        });
+        gridPane.add(deleteAccountButton, 5, 3, 1, 1);
 
         // todo add recent transactions
         int maxTransactions = 5;
@@ -336,7 +349,7 @@ public class Dashboard {
             recentTransactionBox.setPrefSize(200, 50);
 
             int row = i + 3;
-            gridPane.add(recentTransactionBox, 0, row, 5, 1);
+            gridPane.add(recentTransactionBox, 0, row, 6, 1);
         }
 
         dialog.getDialogPane().setContent(gridPane);
@@ -361,26 +374,20 @@ public class Dashboard {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(gridPane);
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
                 String accountName = accountNameTextField.getText();
                 String accountDescription = accountDescriptionTextField.getText();
-                createAccount(accountName, accountDescription);
+                appManager.createAccount(accountName, accountDescription);
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
             }
-
-            return null;
         });
 
         dialog.showAndWait();
-    }
-
-    private void createAccount(String accountName, String accountDescription) {
-        try {
-            appManager.createAccount(accountName, accountDescription);
-            loadDashboardCenter();
-        } catch (Exception e) {
-            this.app.displayError(e.getMessage());
-        }
     }
 
     private void depositMoney(Account account) {
@@ -410,22 +417,21 @@ public class Dashboard {
 
         TextField description = new TextField();
         description.setPromptText("Enter a description");
+        gridPane.add(description, 0, 1, 1, 1);
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(gridPane);
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                try {
-                    double amount = appManager.getDoubleFromString(amountInput.getText());
-                    appManager.addBalance(account.getName(), amount);
-                    loadDashboardCenter();
-                } catch (Exception e) {
-                    app.displayError(e.getMessage());
-                }
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                double amount = appManager.getDoubleFromString(amountInput.getText());
+                appManager.addBalance(account.getName(), amount);
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
             }
-
-            return null;
         });
 
         dialog.showAndWait();
@@ -458,22 +464,21 @@ public class Dashboard {
 
         TextField description = new TextField();
         description.setPromptText("Enter a description");
+        gridPane.add(description, 0, 1, 1, 1);
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(gridPane);
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                try {
-                    double amount = appManager.getDoubleFromString(amountInput.getText());
-                    appManager.removeBalance(account.getName(), amount);
-                    loadDashboardCenter();
-                } catch (Exception e) {
-                    app.displayError(e.getMessage());
-                }
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                double amount = appManager.getDoubleFromString(amountInput.getText());
+                appManager.removeBalance(account.getName(), amount);
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
             }
-
-            return null;
         });
 
         dialog.showAndWait();
@@ -512,23 +517,22 @@ public class Dashboard {
 
         TextField description = new TextField();
         description.setPromptText("Enter a description");
+        gridPane.add(description, 0, 2, 1, 1);
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(gridPane);
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                try {
-                    double amount = appManager.getDoubleFromString(amountInput.getText());
-                    String toAccount = choiceBox.getValue();
-                    appManager.transferMoney(account.getName(), toAccount, amount);
-                    loadDashboardCenter();
-                } catch (Exception e) {
-                    app.displayError(e.getMessage());
-                }
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                double amount = appManager.getDoubleFromString(amountInput.getText());
+                String toAccount = choiceBox.getValue();
+                appManager.transferMoney(account.getName(), toAccount, amount);
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
             }
-
-            return null;
         });
 
         dialog.showAndWait();
@@ -567,23 +571,22 @@ public class Dashboard {
 
         TextField description = new TextField();
         description.setPromptText("Enter a description");
+        gridPane.add(description, 0, 2, 1, 1);
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(gridPane);
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                try {
-                    double amount = appManager.getDoubleFromString(amountInput.getText());
-                    String fromAccount = choiceBox.getValue();
-                    appManager.borrowMoney(fromAccount, account.getName(), amount);
-                    loadDashboardCenter();
-                } catch (Exception e) {
-                    app.displayError(e.getMessage());
-                }
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                double amount = appManager.getDoubleFromString(amountInput.getText());
+                String fromAccount = choiceBox.getValue();
+                appManager.borrowMoney(fromAccount, account.getName(), amount);
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
             }
-
-            return null;
         });
 
         dialog.showAndWait();
@@ -622,23 +625,44 @@ public class Dashboard {
 
         TextField description = new TextField();
         description.setPromptText("Enter a description");
+        gridPane.add(description, 0, 2, 1, 1);
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(gridPane);
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                try {
-                    double amount = appManager.getDoubleFromString(amountInput.getText());
-                    String toAccount = choiceBox.getValue();
-                    appManager.repayMoney(account.getName(), toAccount, amount);
-                    loadDashboardCenter();
-                } catch (Exception e) {
-                    app.displayError(e.getMessage());
-                }
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                double amount = appManager.getDoubleFromString(amountInput.getText());
+                String toAccount = choiceBox.getValue();
+                appManager.repayMoney(account.getName(), toAccount, amount);
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
             }
+        });
 
-            return null;
+        dialog.showAndWait();
+    }
+
+    private void editAccount(Account account) {
+
+    }
+
+    private void deleteAccount(Account account) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Delete account named '" + account.getName() + "'?");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.YES);
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                appManager.deleteAccount(account.getName());
+                loadDashboardCenter();
+            } catch (Exception e){
+                event.consume();
+                app.displayError(e.getMessage());
+            }
         });
 
         dialog.showAndWait();
