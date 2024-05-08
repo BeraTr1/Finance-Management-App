@@ -1,5 +1,8 @@
 package user.saulo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Account {
     private String name;
     private String description;
@@ -7,6 +10,7 @@ public class Account {
     private double debt;
     private double credit;
     private double goal;
+    private List<Transaction> transactions = new ArrayList<>();
 
     public Account(String name, String description, double balance, double credit, double debt, double goal) {
         this.name = name;
@@ -72,5 +76,18 @@ public class Account {
 
     public void setGoal(double goal) {
         this.goal = goal;
+    }
+
+    public void addTransaction(Transaction transaction) {
+        if (this.transactions.contains(transaction)) {
+            System.out.println("Transaction with id '" + transaction.getId() + "' already exists in this account!");
+            return;
+        }
+
+        this.transactions.add(0, transaction);
+    }
+
+    public List<Transaction> getTransactions() {
+        return this.transactions;
     }
 }
