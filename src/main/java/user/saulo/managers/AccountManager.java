@@ -3,15 +3,16 @@ package user.saulo.managers;
 import user.saulo.Account;
 import user.saulo.FinancesManagementApp;
 import user.saulo.MathUtils;
+import user.saulo.Transaction;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class AccountManager {
     private final Map<String, Account> accounts = new HashMap<>();
+
+    private final TransactionManager transactionManager = FinancesManagementApp.transactionManager;
 
     public Account createAccount(String accountName, String accountDescription) throws Exception {
         if (accounts.containsKey(accountName)) {
@@ -49,31 +50,57 @@ public class AccountManager {
         return this.accounts.getOrDefault(accountName, null);
     }
 
-    public void transferMoney(Account fromAccount, Account toAccount, double amount) throws Exception {
+    public void depositMoney(Account account, double amount, String notes) {
+        addBalance(account, amount);
+        String transactionDescription = "Deposited balance";
+        addTransaction(account, amount, transactionDescription, notes);
+    }
+
+    public void withdrawMoney(Account account, double amount, String note) throws Exception {
+        removeBalance(account, amount);
+        String transactionDescription = "Withdrew balance";
+        addTransaction(account, -amount, transactionDescription, note);
+    }
+
+    public void transferMoney(Account fromAccount, Account toAccount, double amount, String notes) throws Exception {
         removeBalance(fromAccount, amount);
         addBalance(toAccount, amount);
+        String transactionDescriptionToAccount = "Transferred balance to '" + toAccount.getName() + "'";
+        addTransaction(fromAccount, toAccount, -amount, transactionDescriptionToAccount, notes);
+        String transactionDescriptionFromAccount = "Transferred balance from '" + toAccount.getName() + "'";
+        addTransaction(toAccount, fromAccount, amount, transactionDescriptionFromAccount, notes);
     }
 
-    public void borrowMoney(Account fromAccount, Account toAccount, double amount) throws Exception {
-        transferMoney(fromAccount, toAccount, amount);
+    public void borrowMoney(Account fromAccount, Account toAccount, double amount, String notes) throws Exception {
+        removeBalance(fromAccount, amount);
+        addBalance(toAccount, amount);
         addCredit(fromAccount, amount);
         addDebt(toAccount, amount);
+        String transactionDescriptionToAccount = "Borrowed money from '" + fromAccount.getName() + "'";
+        addTransaction(toAccount, fromAccount, amount, transactionDescriptionToAccount, notes);
+        String transactionDescriptionFromAccount = "Lent money to '" + fromAccount.getName() + "'";
+        addTransaction(fromAccount, toAccount, -amount, transactionDescriptionFromAccount, notes);
     }
 
-    public void repayMoney(Account fromAccount, Account toAccount, double amount) throws Exception {
-        transferMoney(fromAccount, toAccount, amount);
+    public void repayMoney(Account fromAccount, Account toAccount, double amount, String notes) throws Exception {
+        removeBalance(fromAccount, amount);
+        addBalance(toAccount, amount);
         removeCredit(toAccount, amount);
         removeDebt(fromAccount, amount);
+        String transactionDescriptionToAccount = "Repaid debt to '" + toAccount.getName() + "'";
+        addTransaction(toAccount, fromAccount, amount, transactionDescriptionToAccount, notes);
+        String transactionDescriptionFromAccount = "Repaid debt from '" + toAccount.getName() + "'";
+        addTransaction(fromAccount, toAccount, -amount, transactionDescriptionFromAccount, notes);
     }
 
-    public void addBalance(Account account, double amount) {
+    private void addBalance(Account account, double amount) {
         amount = MathUtils.roundDouble(amount);
         double newBalance = MathUtils.roundDouble(new BigDecimal(Double.toString(account.getBalance())).add(new BigDecimal(Double.toString(amount))).doubleValue());
 
         account.setBalance(newBalance);
     }
 
-    public void removeBalance(Account account, double amount) throws Exception {
+    private void removeBalance(Account account, double amount) throws Exception {
         amount = MathUtils.roundDouble(amount);
         double balance = account.getBalance();
 
@@ -85,13 +112,14 @@ public class AccountManager {
         account.setBalance(newBalance);
     }
 
-    public void addDebt(Account account, double amount) {
+    private void addDebt(Account account, double amount) {
         amount = MathUtils.roundDouble(amount);
-        double newDebt = MathUtils.roundDouble(new BigDecimal(Double.toString(account.getCredit())).add(new BigDecimal(Double.toString(amount))).doubleValue());
+        double newDebt = MathUtils.roundDouble(new BigDecimal(Double.toString(account.getDebt())).add(new BigDecimal(Double.toString(amount))).doubleValue());
+        System.out.println("New debt is: " + newDebt);
         account.setDebt(newDebt);
     }
 
-    public void removeDebt(Account account, double amount) throws Exception {
+    private void removeDebt(Account account, double amount) throws Exception {
         amount = MathUtils.roundDouble(amount);
         double debt = account.getDebt();
 
@@ -103,13 +131,13 @@ public class AccountManager {
         account.setDebt(newDebt);
     }
 
-    public void addCredit(Account account, double amount) {
+    private void addCredit(Account account, double amount) {
         amount = MathUtils.roundDouble(amount);
         double newCredit = MathUtils.roundDouble(new BigDecimal(Double.toString(account.getCredit())).add(new BigDecimal(Double.toString(amount))).doubleValue());
         account.setCredit(newCredit);
     }
 
-    public void removeCredit(Account account, double amount) throws Exception {
+    private void removeCredit(Account account, double amount) throws Exception {
         amount = MathUtils.roundDouble(amount);
         double credit = account.getCredit();
 
@@ -131,5 +159,19 @@ public class AccountManager {
 
     public boolean accountExists(String accountName) {
         return this.accounts.containsKey(accountName);
+    }
+
+    public void addTransaction(Account account, Transaction transaction) {
+        account.addTransaction(transaction);
+    }
+
+    public void addTransaction(Account account, double amount, String description, String notes) {
+        addTransaction(account, null, amount, description, notes);
+    }
+
+    public void addTransaction(Account account, Account toAccount, double amount, String description, String notes) {
+        String date = new SimpleDateFormat("MM/dd/yyyy").format(Calendar.getInstance().getTime());
+        Transaction transaction = transactionManager.createTransaction(account, toAccount, amount, description, notes, date);
+        account.addTransaction(transaction);
     }
 }
