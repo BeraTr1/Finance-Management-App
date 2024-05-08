@@ -28,9 +28,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
-import user.saulo.Account;
-import user.saulo.FinancesManagementApp;
-import user.saulo.managers.AppManager;
+import user.saulo.*;
+import user.saulo.managers.AccountManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,12 +40,14 @@ public class Dashboard {
     private String title = "Dashboard";
     private Scene scene;
     private BorderPane pane;
-    private AppManager appManager;
+
+    private AccountManager accountManager;
+
     private App app;
 
     public Dashboard() {
         this.app = App.instance;
-        this.appManager = FinancesManagementApp.appManager;
+        this.accountManager = FinancesManagementApp.accountManager;
         BorderPane gridPane = getDashboardPane();
         this.pane = gridPane;
         this.scene = new Scene(gridPane);
@@ -84,7 +85,7 @@ public class Dashboard {
         grid.setPadding(new Insets(20, 20, 20, 20));
 
         // load account cards
-        List<Account> accounts = appManager.getAccounts();
+        List<Account> accounts = accountManager.getAccounts();
         int maxRow = 10;
         int maxCol = 5;
 
@@ -147,16 +148,16 @@ public class Dashboard {
                 double accountDebt = account.getDebt();
                 double totalMoney = (accountBalance + accountCredit + accountDebt) == 0 ? 1 : (accountBalance + accountCredit + accountDebt);
 
-                double balancePercentage = appManager.roundDouble(accountBalance / totalMoney);
-                double arcBalanceAngleLength = appManager.roundDouble(balancePercentage * 270);
+                double balancePercentage = MathUtils.roundDouble(accountBalance / totalMoney);
+                double arcBalanceAngleLength = MathUtils.roundDouble(balancePercentage * 270);
                 Color arcBalanceColor = Color.web("#3FDA2A");
 //
-                double creditPercentage = appManager.roundDouble(accountCredit / totalMoney);
-                double arcCreditAngleLength = appManager.roundDouble(creditPercentage * 270 + arcBalanceAngleLength);
+                double creditPercentage = MathUtils.roundDouble(accountCredit / totalMoney);
+                double arcCreditAngleLength = MathUtils.roundDouble(creditPercentage * 270 + arcBalanceAngleLength);
                 Color arcCreditColor = Color.web("#97FC5E");
 
-                double debtPercentage = appManager.roundDouble(accountDebt / totalMoney);
-                double arcDebtAngleLenght = appManager.roundDouble(debtPercentage * 270 + arcCreditAngleLength);
+                double debtPercentage = MathUtils.roundDouble(accountDebt / totalMoney);
+                double arcDebtAngleLenght = MathUtils.roundDouble(debtPercentage * 270 + arcCreditAngleLength);
                 Color arcDebtColor = Color.web("#EE3024");
 
                 Section graySection = new Section(0, totalMoney);
@@ -280,8 +281,8 @@ public class Dashboard {
         GridPane gridPane = new GridPane();
         gridPane.setHgap(5);
         gridPane.setVgap(5);
-        gridPane.setGridLinesVisible(true);
-        gridPane.setPrefSize(dialog.getHeight(), dialog.getWidth());
+//        gridPane.setGridLinesVisible(false);
+//        gridPane.setPrefSize(dialog.getHeight(), dialog.getWidth());
         gridPane.setAlignment(Pos.CENTER);
 
         HBox accountVisual = new HBox();
@@ -334,22 +335,79 @@ public class Dashboard {
         deleteAccountButton.setOnAction(event -> {
             deleteAccount(account);
 
-            if (!appManager.accountExists(account.getName())) {
+            if (!accountManager.accountExists(account.getName())) {
                 dialog.close();
             }
         });
         gridPane.add(deleteAccountButton, 5, 3, 1, 1);
 
-        // todo add recent transactions
-        int maxTransactions = 5;
+        List<Transaction> recentTransactions = account.getTransactions();
+        final int maxTransactionsListed = 5;
+        int currentTransactionsListed = 0;
 
-        for (int i = 1; i <= maxTransactions; i++) {
-            HBox recentTransactionBox = new HBox();
-            recentTransactionBox.setStyle("-fx-background-color: #D4759C");
-            recentTransactionBox.setPrefSize(200, 50);
+        for (Transaction transaction : recentTransactions) {
+            if (currentTransactionsListed >= maxTransactionsListed) {
+                break;
+            }
 
-            int row = i + 3;
-            gridPane.add(recentTransactionBox, 0, row, 6, 1);
+            GridPane recentTransactionsGrid = new GridPane();
+//            recentTransactionsGrid.setGridLinesVisible(true);
+            recentTransactionsGrid.setHgap(5);
+            recentTransactionsGrid.setPadding(new Insets(5, 5, 5, 5));
+            recentTransactionsGrid.setPrefWidth(Double.MAX_VALUE);
+
+            ColumnConstraints col1 = new ColumnConstraints();
+            col1.setFillWidth(true);
+            col1.setPercentWidth(15);
+            ColumnConstraints col2 = new ColumnConstraints();
+            col2.setFillWidth(true);
+            col2.setPercentWidth(70);
+            ColumnConstraints col3 = new ColumnConstraints();
+            col3.setFillWidth(true);
+            col3.setPercentWidth(15);
+
+            recentTransactionsGrid.getColumnConstraints().addAll(col1, col2, col3);
+
+            RowConstraints row1 = new RowConstraints();
+            row1.setPercentHeight(50);
+            RowConstraints row2 = new RowConstraints();
+            row2.setPercentHeight(50);
+
+            recentTransactionsGrid.getRowConstraints().addAll(row1, row2);
+
+            Text dateText = new Text();
+            dateText.setText(transaction.getDate());
+            recentTransactionsGrid.add(dateText, 0, 0, 1, 1);
+
+            Text descriptionText = new Text();
+            descriptionText.setText(transaction.getDescription());
+            recentTransactionsGrid.add(descriptionText, 1, 0, 1, 1);
+
+            Text amountText = new Text();
+            Color amountTextColor = transaction.getAmount() >= 0 ? Color.web("#2ED323") : Color.web("#D52B2B");
+            amountText.setFill(amountTextColor);
+            String amountString = transaction.getAmount() >= 0 ? "+" + transaction.getAmount() : Double.toString(transaction.getAmount());
+            amountText.setText(amountString);
+            recentTransactionsGrid.add(amountText, 2, 0, 1, 1);
+
+            Text notesText = new Text();
+            notesText.setText(transaction.getNotes());
+            notesText.minWidth(Double.MAX_VALUE);
+            notesText.maxWidth(Double.MAX_VALUE);
+            GridPane.setHgrow(notesText, Priority.ALWAYS);
+            recentTransactionsGrid.add(notesText, 0, 1, 3, 1);
+
+            currentTransactionsListed += 1;
+            int recentTransactionsRow = currentTransactionsListed + 3;
+            gridPane.add(recentTransactionsGrid, 0, recentTransactionsRow, 6, 1);
+            GridPane.setHalignment(recentTransactionsGrid, HPos.CENTER);
+
+//            HBox tes = new HBox();
+//            tes.setStyle("-fx-background-color: purple");
+//            tes.setPrefSize(10, 5);
+//            gridPane.add(tes, 0, recentTransactionsRow, 6, 1);
+
+//            tes.getChildren().add(recentTransactionsGrid);
         }
 
         dialog.getDialogPane().setContent(gridPane);
@@ -379,7 +437,7 @@ public class Dashboard {
             try {
                 String accountName = accountNameTextField.getText();
                 String accountDescription = accountDescriptionTextField.getText();
-                appManager.createAccount(accountName, accountDescription);
+                accountManager.createAccount(accountName, accountDescription);
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
@@ -392,6 +450,7 @@ public class Dashboard {
 
     private void depositMoney(Account account) {
         GridPane gridPane = new GridPane();
+
         RowConstraints row1 = new RowConstraints();
         row1.setPercentHeight(50);
         RowConstraints row2 = new RowConstraints();
@@ -425,8 +484,8 @@ public class Dashboard {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                double amount = appManager.getDoubleFromString(amountInput.getText());
-                appManager.addBalance(account.getName(), amount);
+                double amount = InputUtils.getDoubleFromString(amountInput.getText());
+                accountManager.depositMoney(account, amount, description.getText());
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
@@ -472,8 +531,8 @@ public class Dashboard {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                double amount = appManager.getDoubleFromString(amountInput.getText());
-                appManager.removeBalance(account.getName(), amount);
+                double amount = InputUtils.getDoubleFromString(amountInput.getText());
+                accountManager.withdrawMoney(account, amount, description.getText());
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
@@ -512,7 +571,7 @@ public class Dashboard {
         gridPane.add(amountInput, 0, 0, 1, 1);
 
         ChoiceBox<String> choiceBox = new ChoiceBox<>();
-        choiceBox.getItems().addAll(appManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
+        choiceBox.getItems().addAll(accountManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
         gridPane.add(choiceBox, 0, 1, 1, 1);
 
         TextField description = new TextField();
@@ -525,9 +584,9 @@ public class Dashboard {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                double amount = appManager.getDoubleFromString(amountInput.getText());
-                String toAccount = choiceBox.getValue();
-                appManager.transferMoney(account.getName(), toAccount, amount);
+                double amount = InputUtils.getDoubleFromString(amountInput.getText());
+                Account toAccount = accountManager.getAccountFromName(choiceBox.getValue());
+                accountManager.transferMoney(account, toAccount, amount, description.getText());
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
@@ -566,7 +625,7 @@ public class Dashboard {
         gridPane.add(amountInput, 0, 0, 1, 1);
 
         ChoiceBox<String> choiceBox = new ChoiceBox<>();
-        choiceBox.getItems().addAll(appManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
+        choiceBox.getItems().addAll(accountManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
         gridPane.add(choiceBox, 0, 1, 1, 1);
 
         TextField description = new TextField();
@@ -579,9 +638,9 @@ public class Dashboard {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                double amount = appManager.getDoubleFromString(amountInput.getText());
-                String fromAccount = choiceBox.getValue();
-                appManager.borrowMoney(fromAccount, account.getName(), amount);
+                double amount = InputUtils.getDoubleFromString(amountInput.getText());
+                Account fromAccount = accountManager.getAccountFromName(choiceBox.getValue());
+                accountManager.borrowMoney(fromAccount, account, amount, description.getText());
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
@@ -620,7 +679,7 @@ public class Dashboard {
         gridPane.add(amountInput, 0, 0, 1, 1);
 
         ChoiceBox<String> choiceBox = new ChoiceBox<>();
-        choiceBox.getItems().addAll(appManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
+        choiceBox.getItems().addAll(accountManager.getAccounts().stream().filter(acc -> !acc.getName().equals(account.getName())).map(Account::getName).toList());
         gridPane.add(choiceBox, 0, 1, 1, 1);
 
         TextField description = new TextField();
@@ -633,9 +692,9 @@ public class Dashboard {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                double amount = appManager.getDoubleFromString(amountInput.getText());
-                String toAccount = choiceBox.getValue();
-                appManager.repayMoney(account.getName(), toAccount, amount);
+                double amount = InputUtils.getDoubleFromString(amountInput.getText());
+                Account toAccount = accountManager.getAccountFromName(choiceBox.getValue());
+                accountManager.repayMoney(account, toAccount, amount, description.getText());
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
@@ -657,7 +716,7 @@ public class Dashboard {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.YES);
         okButton.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                appManager.deleteAccount(account.getName());
+                accountManager.deleteAccount(account.getName());
                 loadDashboardCenter();
             } catch (Exception e){
                 event.consume();
