@@ -16,13 +16,11 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import user.saulo.Account;
 import user.saulo.FinancesManagementApp;
-import user.saulo.managers.AppManager;
 import user.saulo.managers.DataManager;
 
 import java.util.List;
 
-public class App extends Application { // todo merge this class with Main class
-    private static AppManager appManager;
+public class App extends Application { // todo delete and merge this class with Main class
     private static Stage currentStage;
     public static App instance;
 
@@ -33,7 +31,6 @@ public class App extends Application { // todo merge this class with Main class
     @Override
     public void start(Stage stage) throws Exception {
         instance = this;
-        appManager = FinancesManagementApp.appManager;
         currentStage = stage;
         loadDashboard();
     }
