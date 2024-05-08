@@ -2,21 +2,26 @@ package user.saulo.data;
 
 import user.saulo.Account;
 import user.saulo.FinancesManagementApp;
+import user.saulo.Transaction;
 import user.saulo.managers.AccountManager;
-import user.saulo.managers.AppManager;
+import user.saulo.managers.TransactionManager;
 
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class SQLite implements Data {
     private final File databaseFile;
 
-    private AccountManager accountManager;
+    private final AccountManager accountManager;
+    private final TransactionManager transactionManager;
 
     public SQLite(String dataFilePath, String dataFileName) {
         this.databaseFile = new File(dataFilePath + File.separator + dataFileName);
         this.accountManager = FinancesManagementApp.accountManager;
+        this.transactionManager = FinancesManagementApp.transactionManager;
     }
 
     private Connection connect() {
@@ -42,6 +47,7 @@ public class SQLite implements Data {
         }
 
         loadAccounts(connection);
+        loadTransactions(connection);
     }
 
     @Override
@@ -54,61 +60,117 @@ public class SQLite implements Data {
             return;
         }
 
+        createTables(connection);
         saveAccounts(connection);
+
         deleteOldAccounts(connection);
+        deleteOldTransactions(connection);
+
+        System.out.println("Finished saving all data!");
 
         connection.close();
     }
 
-    private void saveAccounts(Connection connection) {
+    private void createTables(Connection connection) {
         try {
-            PreparedStatement createTableStatement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS Accounts(name varchar(255) primary key, description varchar(255), balance real, credit real, debt real, goal real)");
-            createTableStatement.executeUpdate();
-
-            List<Account> accounts = FinancesManagementApp.accountManager.getAccounts();
-            for (Account account : accounts) {
-                String accountName = account.getName();
-                String accountDescription = account.getDescription();
-                double accountBalance = account.getBalance();
-                double accountCredit = account.getCredit();
-                double accountDebt = account.getDebt();
-                double accountGoal = account.getGoal();
-
-                insertAccount(connection, accountName, accountDescription, accountBalance, accountCredit, accountDebt, accountGoal);
-            }
+            Statement statement = connection.createStatement();
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS Accounts(name varchar(255) primary key, description varchar(255), balance real, credit real, debt real, goal real)");
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS Transactions(id varchar(255) primary key, account_name varchar(255), to_account_name varchar(255), amount real, date varchar(255), description varchar(255), notes varchar(255))");
         } catch (SQLException e) {
-            System.out.println("Error while trying to save accounts: " + e.getMessage());
+            System.out.println("Error while trying to create a table: " + e.getMessage());
+        }
+    }
+
+    private void saveAccounts(Connection connection) {
+        List<Account> accounts = accountManager.getAccounts();
+        for (Account account : accounts) {
+            String accountName = account.getName();
+            String accountDescription = account.getDescription();
+            double accountBalance = account.getBalance();
+            double accountCredit = account.getCredit();
+            double accountDebt = account.getDebt();
+            double accountGoal = account.getGoal();
+
+            insertAccount(connection, accountName, accountDescription, accountBalance, accountCredit, accountDebt, accountGoal);
+
+            List<Transaction> transactions = account.getTransactions();
+
+            if (!transactions.isEmpty()) {
+                System.out.println("Saving transactions...");
+            }
+
+            for (Transaction transaction : transactions) {
+                String transactionId = transaction.getId().toString();
+                String transactionAccountName = transaction.getAccount().getName();
+                String transactionToAccountName = transaction.getToAccount() == null ? null : transaction.getToAccount().getName();
+                double transactionAmount = transaction.getAmount();
+                String transactionDate = transaction.getDate();
+                String transactionDescription = transaction.getDescription();
+                String transactionNotes = transaction.getNotes();
+
+                insertTransaction(connection, transactionId, transactionAccountName, transactionToAccountName, transactionAmount, transactionDate, transactionDescription, transactionNotes);
+            }
         }
     }
 
     private void deleteOldAccounts(Connection connection) {
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM Accounts");
-            ResultSet resultSet = preparedStatement.executeQuery();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM Accounts");
 
             if (resultSet == null) {
                 return;
             }
 
+            System.out.println("Checking for old accounts to be deleted...");
+            List<String> accountsToDelete = new ArrayList<>();
+
             while (resultSet.next()) {
                 String accountName = resultSet.getString("name");
+                System.out.println("\tChecking if account '" + accountName + "' is registered...");
 
                 if (accountManager.accountExists(accountName)) {
+                    System.out.println("\t\tAccount is registered, not deleting!");
                     continue;
                 }
 
-                deleteAccount(connection, accountName);
+                System.out.println("\t\tAccount is not registered. Deleting account...");
+                accountsToDelete.add(accountName);
             }
 
+            for (String accountName : accountsToDelete) {
+                statement.executeUpdate("DELETE FROM Accounts WHERE name='" + accountName + "'");
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private void deleteAccount(Connection connection, String accountName) {
+    private void deleteOldTransactions(Connection connection) {
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM Accounts WHERE name='" + accountName + "'");
-            preparedStatement.execute();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM Transactions");
+
+            if (resultSet == null) {
+                return;
+            }
+
+            List<String> transactionsToDelete = new ArrayList<>();
+
+            while (resultSet.next()) {
+                String accountName = resultSet.getString("account_name");
+
+                if (accountManager.accountExists(accountName)) {
+                    continue;
+                }
+
+                System.out.println("Deleted transaction from '" + accountName + "'");
+                transactionsToDelete.add(accountName);
+            }
+
+            for (String accountName : transactionsToDelete) {
+                statement.executeUpdate("DELETE FROM Transactions WHERE account_name='" + accountName + "'");
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -124,6 +186,24 @@ public class SQLite implements Data {
             preparedStatement.setDouble(5, accountDebt);
             preparedStatement.setDouble(6, accountGoal);
             preparedStatement.execute();
+        } catch (SQLException e) {
+            System.out.println("Error while trying to insert account into database: " + e.getMessage());
+        }
+    }
+
+    private void insertTransaction(Connection connection, String id, String accountName, String toAccountName, double amount, String date, String description, String notes) {
+        try {
+            System.out.println("\tInserting transaction into table...");
+            PreparedStatement preparedStatement = connection.prepareStatement("REPLACE INTO Transactions(id, account_name, to_account_name, amount, date, description, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            preparedStatement.setString(1, id);
+            preparedStatement.setString(2, accountName);
+            preparedStatement.setString(3, toAccountName);
+            preparedStatement.setDouble(4, amount);
+            preparedStatement.setString(5, date);
+            preparedStatement.setString(6, description);
+            preparedStatement.setString(7, notes);
+            preparedStatement.execute();
+            System.out.println("\t\tSaved transaction from '" + accountName + "' with id '" + id + "'");
         } catch (SQLException e) {
             System.out.println("Error while trying to insert account into database: " + e.getMessage());
         }
@@ -147,7 +227,37 @@ public class SQLite implements Data {
                 double accountGoal = resultSet.getDouble("goal");
 
                 Account account = new Account(accountName, accountDescription, accountBalance, accountCredit, accountDebt, accountGoal);
-                FinancesManagementApp.accountManager.addAccount(account);
+                accountManager.addAccount(account);
+            }
+        } catch (Exception e) {
+            System.out.println("Error while trying to load accounts: " + e.getMessage());
+        }
+    }
+
+    private void loadTransactions(Connection connection) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM Transactions");
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet == null) {
+                return;
+            }
+
+            while (resultSet.next()) {
+                UUID transactionId = UUID.fromString(resultSet.getString("id"));
+                String accountName = resultSet.getString("account_name");
+                String toAccountName = resultSet.getString("to_account_name");
+                double amount = resultSet.getDouble("amount");
+                String date = resultSet.getString("date");
+                String description = resultSet.getString("description");
+                String notes = resultSet.getString("notes");
+                Account account = accountManager.getAccountFromName(accountName);
+                Account toAccount = accountManager.getAccountFromName(toAccountName);
+
+                Transaction transaction = new Transaction(transactionId, account, toAccount, amount, description, notes, date);
+                transactionManager.addTransaction(transaction);
+                accountManager.addTransaction(account, transaction);
+                System.out.println("Loaded transaction from '" + accountName + "' with id '" + transactionId + "'");
             }
         } catch (Exception e) {
             System.out.println("Error while trying to load accounts: " + e.getMessage());
