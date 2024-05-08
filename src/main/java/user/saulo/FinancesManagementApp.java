@@ -3,15 +3,15 @@ package user.saulo;
 import user.saulo.application.App;
 import user.saulo.data.SQLite;
 import user.saulo.managers.AccountManager;
-import user.saulo.managers.AppManager;
 import user.saulo.managers.DataManager;
+import user.saulo.managers.TransactionManager;
 
 import java.io.File;
 
 public class FinancesManagementApp {
     public static FinancesManagementApp instance;
 
-    public static AppManager appManager;
+    public static TransactionManager transactionManager;
     public static AccountManager accountManager;
     public static DataManager dataManager;
 
@@ -22,11 +22,6 @@ public class FinancesManagementApp {
     }
 
     public void start() {
-//        try {
-//            Class.forName("org.sqlite.JDBC");
-//        } catch (ClassNotFoundException e) {
-//            throw new RuntimeException(e);
-//        }
         this.loadManagers();
 
         try {
@@ -49,9 +44,8 @@ public class FinancesManagementApp {
     }
 
     private void loadManagers() {
+        transactionManager = new TransactionManager();
         accountManager = new AccountManager();
-        appManager = new AppManager();
-//        dataManager = new DataManager(new SQLite(new File(this.getClass().getProtectionDomain().getCodeSource().getLocation() + File.separator + "database.db")));
         dataManager = new DataManager(new SQLite(new File("").getAbsolutePath(), "database.db"));
     }
 }
