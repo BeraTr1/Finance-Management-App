@@ -21,5 +21,7 @@ A simple finance management application for tracking income and spending. This i
 
 ## Screenshots
 
-![Dashboard](#)
-![Transactions](#)
+![Dashboard](#https://github.com/BeraTr1/FinanceManagementApp/blob/master/img/dashboard.png?raw=true)
+
+
+![Debt System](#https://github.com/BeraTr1/FinanceManagementApp/blob/master/img/debt-system.png?raw=true)
