@@ -78,7 +78,7 @@ public class AccountManager {
         addDebt(toAccount, amount);
         String transactionDescriptionToAccount = "Borrowed money from '" + fromAccount.getName() + "'";
         addTransaction(toAccount, fromAccount, amount, transactionDescriptionToAccount, notes);
-        String transactionDescriptionFromAccount = "Lent money to '" + fromAccount.getName() + "'";
+        String transactionDescriptionFromAccount = "Lent money to '" + toAccount.getName() + "'";
         addTransaction(fromAccount, toAccount, -amount, transactionDescriptionFromAccount, notes);
     }
 
@@ -87,9 +87,9 @@ public class AccountManager {
         addBalance(toAccount, amount);
         removeCredit(toAccount, amount);
         removeDebt(fromAccount, amount);
-        String transactionDescriptionToAccount = "Repaid debt to '" + toAccount.getName() + "'";
+        String transactionDescriptionToAccount = "Repaid debt from '" + fromAccount.getName() + "'";
         addTransaction(toAccount, fromAccount, amount, transactionDescriptionToAccount, notes);
-        String transactionDescriptionFromAccount = "Repaid debt from '" + toAccount.getName() + "'";
+        String transactionDescriptionFromAccount = "Repaid debt to '" + toAccount.getName() + "'";
         addTransaction(fromAccount, toAccount, -amount, transactionDescriptionFromAccount, notes);
     }
 

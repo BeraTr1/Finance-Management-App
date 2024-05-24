@@ -32,7 +32,13 @@ import user.saulo.*;
 import user.saulo.managers.AccountManager;
 
 import javax.swing.*;
+import javax.swing.text.DateFormatter;
 import java.awt.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -341,7 +347,7 @@ public class Dashboard {
         });
         gridPane.add(deleteAccountButton, 5, 3, 1, 1);
 
-        List<Transaction> recentTransactions = account.getTransactions();
+        List<Transaction> recentTransactions = sortRecentTransactionsByDate(account.getTransactions());
         final int maxTransactionsListed = 5;
         int currentTransactionsListed = 0;
 
@@ -707,6 +713,24 @@ public class Dashboard {
 
     private void editAccount(Account account) {
 
+    }
+
+    private List<Transaction> sortRecentTransactionsByDate(List<Transaction> transactions) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+
+        Comparator<Transaction> dateComparator = (transaction1, transaction2) -> {
+            try {
+                Date date1 = dateFormat.parse(transaction1.getDate());
+                Date date2 = dateFormat.parse(transaction2.getDate());
+                return date2.compareTo(date1);
+            } catch (ParseException e) {
+                throw new IllegalArgumentException(e);
+            }
+        };
+
+        transactions.sort(dateComparator);
+
+        return transactions;
     }
 
     private void deleteAccount(Account account) {
