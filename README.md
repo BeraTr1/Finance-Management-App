@@ -21,7 +21,7 @@ A simple finance management application for tracking income and spending. This i
 
 ## Screenshots
 
-![Dashboard](#img/dashboard.png)
+![Dashboard](img/dashboard.png)
 
 
-![Debt System](#img/debt-system.png)
+![Debt System](img/debt-system.png)
