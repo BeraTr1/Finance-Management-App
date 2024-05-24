@@ -35,12 +35,14 @@ If you'd like to test or use this app, you'll need to have the following:
 ### Installing
 
 1. Clone the repository:
+   
     ```bash
     git clone https://github.com/BeraTr1/finance-management-app.git
     cd finance-management-app
     ```
 
-2. Build the project using maven:
+3. Build the project using maven:
+   
     ```bash
     mvn clean install
     ```
@@ -48,6 +50,7 @@ If you'd like to test or use this app, you'll need to have the following:
 ### Usage
 
 1. Run the command:
+
     ```bash
     java -jar target/finance-management-app.jar
     ```
