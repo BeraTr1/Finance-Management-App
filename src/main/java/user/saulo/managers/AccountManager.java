@@ -115,7 +115,6 @@ public class AccountManager {
     private void addDebt(Account account, double amount) {
         amount = MathUtils.roundDouble(amount);
         double newDebt = MathUtils.roundDouble(new BigDecimal(Double.toString(account.getDebt())).add(new BigDecimal(Double.toString(amount))).doubleValue());
-        System.out.println("New debt is: " + newDebt);
         account.setDebt(newDebt);
     }
 

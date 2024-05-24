@@ -3,17 +3,13 @@ package user.saulo.application;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
-import eu.hansolo.medusa.Test;
-import eu.hansolo.medusa.skins.SimpleSectionSkin;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -21,26 +17,15 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import javafx.scene.shape.Arc;
-import javafx.scene.shape.ArcType;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javafx.stage.Modality;
 import user.saulo.*;
 import user.saulo.managers.AccountManager;
 
-import javax.swing.*;
-import javax.swing.text.DateFormatter;
-import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Dashboard {
     private String title = "Dashboard";
@@ -63,6 +48,7 @@ public class Dashboard {
     private void load() {
         loadDashboardTop();
         loadDashboardLeft();
+        loadDashboardRight();
         loadDashboardCenter();
     }
 
@@ -74,26 +60,32 @@ public class Dashboard {
 
     private void loadDashboardTop() {
         HBox background = new HBox();
-        Button createAccountButton = new Button();
+        background.setPrefHeight(50);
+        background.setStyle("-fx-background-color: #303030");
 
-        background.setStyle("-fx-background-color: #DFACEF");
-        createAccountButton.setOnAction(actionEvent -> createAccountDialog());
-        createAccountButton.setText("Create New Account");
-        background.getChildren().add(createAccountButton);
         this.pane.setTop(background);
     }
 
     private void loadDashboardCenter() {
+        HBox background = new HBox();
+        background.setStyle("-fx-background-color: #F4E8E0;");
+        background.setPrefSize(2000, 1200);
+        background.setAlignment(Pos.CENTER);
+
         GridPane grid = new GridPane();
-        grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(20);
+        grid.setVgap(20);
         grid.setPadding(new Insets(20, 20, 20, 20));
 
         // load account cards
         List<Account> accounts = accountManager.getAccounts();
         int maxRow = 10;
         int maxCol = 5;
+        final double accountCardWidth = 250;
+        final double accountCardHeight = 350;
+
+        int lastRow = 0;
+        int lastCol = 0;
 
         for (int row = 1; row <= maxRow; row++) {
             for (int col = 1; col <= maxCol; col++) {
@@ -104,9 +96,7 @@ public class Dashboard {
                 Account account = accounts.stream().findFirst().get();
 
                 HBox accountCard = new HBox();
-                final double accountCardWidth = 250;
-                final double accountCardHeight = 350;
-                accountCard.setStyle("-fx-background-color: #484848");
+                accountCard.setStyle("-fx-background-color: #484848; -fx-background-radius: 15 15 15 15; -fx-border-radius: 15 15 15 15;");
                 accountCard.setMinSize(accountCardWidth, accountCardHeight);
                 accountCard.setOnMouseClicked(event -> {
                     inspectAccount(account);
@@ -182,6 +172,9 @@ public class Dashboard {
                 debtSection.setText("Debt");
 
                 Gauge gauge = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION).sectionsVisible(true).sectionTextVisible(true).sections(graySection, balanceSection, creditSection, debtSection).maxValue(totalMoney).value((accountBalance + accountCredit)).barBackgroundColor(accountDebt + accountBalance + accountCredit == 0 ? Color.GRAY : arcDebtColor).barColor(Color.WHITE).valueVisible(false).build();
+                gauge.setOnMouseClicked(mouseEvent -> {
+                    inspectAccount(account);
+                });
                 gridPane.add(gauge, 0, 0, 4, 2);
 
                 Text accountText = new Text();
@@ -217,10 +210,14 @@ public class Dashboard {
                 Text accountName = new Text(account.getName());
                 gridPane.add(accountName, 0, 3, 4, 1);
                 GridPane.setHalignment(accountName, HPos.CENTER);
+                accountName.setFill(Color.web("939393"));
+                accountName.setStyle("-fx-font-size: 25;");
 
                 Button depositButton = new Button();
                 depositButton.setText("Deposit Money");
                 depositButton.setMaxWidth(Double.MAX_VALUE);
+                depositButton.setStyle("-fx-background-color: #939393;");
+                depositButton.setTextFill(Color.web("484848"));
                 depositButton.setOnAction(action -> {
                     depositMoney(account);
                 });
@@ -229,6 +226,8 @@ public class Dashboard {
                 Button withdrawButton = new Button();
                 withdrawButton.setText("Withdraw Money");
                 withdrawButton.setMaxWidth(Double.MAX_VALUE);
+                withdrawButton.setStyle("-fx-background-color: #939393;");
+                withdrawButton.setTextFill(Color.web("484848"));
                 withdrawButton.setOnAction(action -> {
                     withdrawMoney(account);
                 });
@@ -237,6 +236,8 @@ public class Dashboard {
                 Button transferButton = new Button();
                 transferButton.setText("Transfer Money");
                 transferButton.setMaxWidth(Double.MAX_VALUE);
+                transferButton.setStyle("-fx-background-color: #939393;");
+                transferButton.setTextFill(Color.web("484848"));
                 transferButton.setOnAction(action -> {
                     transferMoney(account);
                 });
@@ -246,6 +247,8 @@ public class Dashboard {
                 Button borrowButton = new Button();
                 borrowButton.setText("Borrow Money");
                 borrowButton.setMaxWidth(Double.MAX_VALUE);
+                borrowButton.setStyle("-fx-background-color: #939393;");
+                borrowButton.setTextFill(Color.web("484848"));
                 borrowButton.setOnAction(action -> {
                     borrowMoney(account);
                 });
@@ -255,6 +258,8 @@ public class Dashboard {
                 Button repayDebtButton = new Button();
                 repayDebtButton.setText("Repay Debt");
                 repayDebtButton.setMaxWidth(Double.MAX_VALUE);
+                repayDebtButton.setStyle("-fx-background-color: #939393;");
+                repayDebtButton.setTextFill(Color.web("484848"));
                 repayDebtButton.setOnAction(action -> {
                     repayDebt(account);
                 });
@@ -262,21 +267,61 @@ public class Dashboard {
                 gridPane.add(repayDebtButton, 2, 5, 1, 1);
 
                 grid.add(accountCard, col, row);
+                lastRow = row;
+                lastCol = col;
                 accounts.remove(account);
             }
         }
 
-        // todo make accounts scrollable when needed
+        // create account card
+        HBox createAccountCard = new HBox();
+        createAccountCard.setStyle("-fx-background-color: rgba(147, 147, 147, 0.25); -fx-border-width: 5; -fx-border-color: #939393; -fx-background-radius: 15 15 15 15; -fx-border-radius: 15 15 15 15"); // FCF1EA
+        createAccountCard.setMinSize(accountCardWidth, accountCardHeight);
+        createAccountCard.setAlignment(Pos.CENTER);
+        createAccountCard.setOnMouseClicked(mouseEvent -> {
+            createAccountDialog();
+        });
 
-        this.pane.setCenter(grid);
+        int createAccountCol = lastCol == maxCol ? 1 : lastCol + 1;
+        int createAccountRow = lastRow + (lastCol == maxCol ? 1 : 0);
+
+        Text plusText = new Text();
+        plusText.setText("+");
+        plusText.setFill(Color.GRAY);
+        plusText.setStyle("-fx-font-size: 100;");
+
+        createAccountCard.getChildren().add(plusText);
+        grid.add(createAccountCard, createAccountCol, createAccountRow, 1, 1);
+
+        // todo make accounts scrollable
+
+        background.getChildren().add(grid);
+
+        this.pane.setCenter(background);
     }
 
     private void loadDashboardLeft() {
+        HBox background = new HBox();
+        background.setStyle("-fx-background-color: #484848");
+        background.setAlignment(Pos.CENTER);
+        background.setPrefWidth(300);
+
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
+
+        background.getChildren().add(grid);
+        this.pane.setLeft(background);
+    }
+
+    private void loadDashboardRight() {
+        HBox background = new HBox();
+        background.setStyle("-fx-background-color: #484848");
+        background.setAlignment(Pos.CENTER);
+        background.setPrefWidth(300);
+        this.pane.setRight(background);
     }
 
     private void inspectAccount(Account account) {

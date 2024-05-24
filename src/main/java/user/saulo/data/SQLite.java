@@ -29,7 +29,6 @@ public class SQLite implements Data {
             String url = "jdbc:sqlite:" + this.databaseFile.getAbsolutePath();
             Connection connection = DriverManager.getConnection(url);
 
-            System.out.println("Established connection to SQLite");
             return connection;
         } catch (SQLException e) {
             System.out.println("Error while trying to create a connection: " + e.getMessage());
@@ -52,8 +51,6 @@ public class SQLite implements Data {
 
     @Override
     public void saveAll() throws Exception {
-        System.out.println("Saving all data into " + databaseFile);
-
         Connection connection = connect();
 
         if (connection == null) {
@@ -65,8 +62,6 @@ public class SQLite implements Data {
 
         deleteOldAccounts(connection);
         deleteOldTransactions(connection);
-
-        System.out.println("Finished saving all data!");
 
         connection.close();
     }
@@ -95,10 +90,6 @@ public class SQLite implements Data {
 
             List<Transaction> transactions = account.getTransactions();
 
-            if (!transactions.isEmpty()) {
-                System.out.println("Saving transactions...");
-            }
-
             for (Transaction transaction : transactions) {
                 String transactionId = transaction.getId().toString();
                 String transactionAccountName = transaction.getAccount().getName();
@@ -122,19 +113,15 @@ public class SQLite implements Data {
                 return;
             }
 
-            System.out.println("Checking for old accounts to be deleted...");
             List<String> accountsToDelete = new ArrayList<>();
 
             while (resultSet.next()) {
                 String accountName = resultSet.getString("name");
-                System.out.println("\tChecking if account '" + accountName + "' is registered...");
 
                 if (accountManager.accountExists(accountName)) {
-                    System.out.println("\t\tAccount is registered, not deleting!");
                     continue;
                 }
 
-                System.out.println("\t\tAccount is not registered. Deleting account...");
                 accountsToDelete.add(accountName);
             }
 
@@ -164,7 +151,6 @@ public class SQLite implements Data {
                     continue;
                 }
 
-                System.out.println("Deleted transaction from '" + accountName + "'");
                 transactionsToDelete.add(accountName);
             }
 
@@ -193,7 +179,6 @@ public class SQLite implements Data {
 
     private void insertTransaction(Connection connection, String id, String accountName, String toAccountName, double amount, String date, String description, String notes) {
         try {
-            System.out.println("\tInserting transaction into table...");
             PreparedStatement preparedStatement = connection.prepareStatement("REPLACE INTO Transactions(id, account_name, to_account_name, amount, date, description, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
             preparedStatement.setString(1, id);
             preparedStatement.setString(2, accountName);
@@ -203,7 +188,6 @@ public class SQLite implements Data {
             preparedStatement.setString(6, description);
             preparedStatement.setString(7, notes);
             preparedStatement.execute();
-            System.out.println("\t\tSaved transaction from '" + accountName + "' with id '" + id + "'");
         } catch (SQLException e) {
             System.out.println("Error while trying to insert account into database: " + e.getMessage());
         }
@@ -257,7 +241,6 @@ public class SQLite implements Data {
                 Transaction transaction = new Transaction(transactionId, account, toAccount, amount, description, notes, date);
                 transactionManager.addTransaction(transaction);
                 accountManager.addTransaction(account, transaction);
-                System.out.println("Loaded transaction from '" + accountName + "' with id '" + transactionId + "'");
             }
         } catch (Exception e) {
             System.out.println("Error while trying to load accounts: " + e.getMessage());

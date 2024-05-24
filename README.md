@@ -17,40 +17,9 @@ A simple finance management application for tracking income and spending. This i
 - **Detailed Reports**: Generate detailed financial reports.
 - **Budget Tracking**: Implement budget tracking for each account.
 
+---
+
 ## Screenshots
 
 ![Dashboard](#)
 ![Transactions](#)
-
-## Installation
-
-### Prerequisites
-
-If you'd like to test or use this app, you'll need to have the following:
-
-- Java Development Kit (JDK) 17 or higher
-- [Maven](https://maven.apache.org/)
-- [Git](https://git-scm.com/)
-
-### Installing
-
-1. Clone the repository:
-   
-    ```bash
-    git clone https://github.com/BeraTr1/finance-management-app.git
-    cd finance-management-app
-    ```
-
-3. Build the project using maven:
-   
-    ```bash
-    mvn clean install
-    ```
-
-### Usage
-
-1. Run the command:
-
-    ```bash
-    java -jar target/finance-management-app.jar
-    ```

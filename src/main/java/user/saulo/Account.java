@@ -80,7 +80,6 @@ public class Account {
 
     public void addTransaction(Transaction transaction) {
         if (this.transactions.contains(transaction)) {
-            System.out.println("Transaction with id '" + transaction.getId() + "' already exists in this account!");
             return;
         }
 
